@@ -4,6 +4,7 @@ require("dotenv").config();
 const Anthropic = require("@anthropic-ai/sdk");
 const { INTERVIEWER_PROMPT, COACH_PROMPT, FINAL_REPORT_PROMPT } = require("./prompts");
 const { generateToken, verifyToken, useToken } = require("./tokens");
+const { sendTokenEmail } = require("./email");
 
 const app = express();
 app.use(cors());
@@ -92,7 +93,20 @@ app.post("/api/report", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
+// Webhook — called by Superprofile after payment
+app.post("/api/webhook", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "No email provided" });
+    }
+    const token = await generateToken();
+    await sendTokenEmail(email, token);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
