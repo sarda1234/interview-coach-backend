@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const Anthropic = require("@anthropic-ai/sdk");
 const { INTERVIEWER_PROMPT, COACH_PROMPT, FINAL_REPORT_PROMPT } = require("./prompts");
+const { generateToken, verifyToken, useToken } = require("./tokens");
 
 const app = express();
 app.use(cors());
@@ -10,7 +11,36 @@ app.use(express.json());
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// Route 1 — Get next interview question
+// Route 1 — Generate a new token (called by you after each payment)
+app.post("/api/generate-token", async (req, res) => {
+  const { secret } = req.body;
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    const token = await generateToken();
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Route 2 — Verify token and mark as used
+app.post("/api/verify-token", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const valid = await verifyToken(token);
+    if (!valid) {
+      return res.status(401).json({ valid: false, message: "Invalid or already used token" });
+    }
+    await useToken(token);
+    res.json({ valid: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Route 3 — Get next interview question
 app.post("/api/interview", async (req, res) => {
   const { role, messages } = req.body;
   try {
@@ -26,7 +56,7 @@ app.post("/api/interview", async (req, res) => {
   }
 });
 
-// Route 2 — Get coach feedback on an answer
+// Route 4 — Get coach feedback
 app.post("/api/feedback", async (req, res) => {
   const { question, answer } = req.body;
   try {
@@ -47,7 +77,7 @@ app.post("/api/feedback", async (req, res) => {
   }
 });
 
-// Route 3 — Get final report
+// Route 5 — Get final report
 app.post("/api/report", async (req, res) => {
   const { role, transcript } = req.body;
   try {
