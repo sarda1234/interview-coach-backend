@@ -26,7 +26,7 @@ app.post("/api/generate-token", async (req, res) => {
   }
 });
 
-// Route 2 — Verify token and mark as used
+// Route 2 — Verify token (without consuming it)
 app.post("/api/verify-token", async (req, res) => {
   const { token } = req.body;
   try {
@@ -34,8 +34,18 @@ app.post("/api/verify-token", async (req, res) => {
     if (!valid) {
       return res.status(401).json({ valid: false, message: "Invalid or already used token" });
     }
-    await useToken(token);
     res.json({ valid: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Route 2b — Consume token when interview starts
+app.post("/api/use-token", async (req, res) => {
+  const { token } = req.body;
+  try {
+    await useToken(token);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -93,7 +103,8 @@ app.post("/api/report", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-// Webhook — called by Superprofile after payment
+
+// Route 6 — Webhook called by Superprofile after payment
 app.post("/api/webhook", async (req, res) => {
   try {
     const { email } = req.body;
@@ -107,6 +118,7 @@ app.post("/api/webhook", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
