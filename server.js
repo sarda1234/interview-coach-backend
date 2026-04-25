@@ -124,6 +124,21 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Route 8 — Admin: generate token and send email manually
+app.post("/api/admin/send-token", async (req, res) => {
+  const { secret, email } = req.body;
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    const token = await generateToken();
+    await sendTokenEmail(email, token);
+    res.json({ success: true, message: `Email sent to ${email}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

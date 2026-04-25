@@ -1,13 +1,19 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "sarda.ashwin@gmail.com",
+    pass: "qpkquxnjknteyvis",
+  },
+});
 
 async function sendTokenEmail(customerEmail, token) {
   const link = `https://interview-coach-frontend-nu.vercel.app/?token=${token}`;
-  
-  await resend.emails.send({
-    from: process.env.SENDER_EMAIL,
+
+  await transporter.sendMail({
+    from: '"AI Interview Coach" <sarda.ashwin@gmail.com>',
     to: customerEmail,
     subject: "Your AI Interview Coach Access Link 🎯",
     html: `
