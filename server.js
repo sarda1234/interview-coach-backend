@@ -12,7 +12,9 @@ app.use(express.json());
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// Route 1 — Generate a new token (called by you after each payment)
+let clickCount = 0;
+
+// Route 1 — Generate a new token
 app.post("/api/generate-token", async (req, res) => {
   const { secret } = req.body;
   if (secret !== process.env.ADMIN_SECRET) {
@@ -26,7 +28,7 @@ app.post("/api/generate-token", async (req, res) => {
   }
 });
 
-// Route 2 — Verify token (without consuming it)
+// Route 2 — Verify token
 app.post("/api/verify-token", async (req, res) => {
   const { token } = req.body;
   try {
@@ -40,7 +42,7 @@ app.post("/api/verify-token", async (req, res) => {
   }
 });
 
-// Route 2b — Consume token when interview starts
+// Route 2b — Consume token
 app.post("/api/use-token", async (req, res) => {
   const { token } = req.body;
   try {
@@ -119,7 +121,7 @@ app.post("/api/webhook", async (req, res) => {
   }
 });
 
-// Route 7 — Health check to keep Render awake
+// Route 7 — Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
@@ -139,7 +141,19 @@ app.post("/api/admin/send-token", async (req, res) => {
   }
 });
 
+// Route 9 — Track buy button clicks
+app.post("/api/track-click", (req, res) => {
+  clickCount++;
+  console.log(`Buy button clicked! Total: ${clickCount}`);
+  res.json({ success: true });
+});
+
+// Route 10 — Get click count
+app.get("/api/click-count", (req, res) => {
+  res.json({ count: clickCount });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
