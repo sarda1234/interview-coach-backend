@@ -13,6 +13,7 @@ app.use(express.json());
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 let clickCount = 0;
+let freeTrialCount = 0;
 
 // Route 1 — Generate a new token
 app.post("/api/generate-token", async (req, res) => {
@@ -168,6 +169,18 @@ app.post("/api/track-click", (req, res) => {
 // Route 10 — Get click count
 app.get("/api/click-count", (req, res) => {
   res.json({ count: clickCount });
+});
+
+// Route 11 — Track free trial starts
+app.post("/api/track-free-trial", (req, res) => {
+  freeTrialCount++;
+  console.log(`Free trial started! Total: ${freeTrialCount}`);
+  res.json({ success: true });
+});
+
+// Route 12 — Get free trial count
+app.get("/api/free-trial-count", (req, res) => {
+  res.json({ count: freeTrialCount });
 });
 
 const PORT = process.env.PORT || 3001;
