@@ -53,9 +53,26 @@ app.post("/api/use-token", async (req, res) => {
   }
 });
 
-// Route 3 — Get next interview question
+// Route 3 — Get next interview question (paid)
 app.post("/api/interview", async (req, res) => {
   const { role, messages } = req.body;
+  try {
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 500,
+      system: INTERVIEWER_PROMPT(role),
+      messages,
+    });
+    res.json({ reply: response.content[0].text });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Route 3b — Free trial interview (3 questions, no token needed)
+app.post("/api/free-interview", async (req, res) => {
+  const { role, messages } = req.body;
+  if (!role || !messages) return res.status(400).json({ error: "Missing fields" });
   try {
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
